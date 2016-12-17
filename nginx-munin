@@ -1,0 +1,31 @@
+server {
+  listen 8080 default_server;
+  server_name munin;
+  access_log /var/log/nginx/munin-access.log;
+  error_log /var/log/nginx/munin-server.log;
+
+  location /munin {
+    root /var/cache/munin/www;
+  }
+
+  location / {
+    auth_basic "Munin Server";
+    auth_basic_user_file "/etc/munin/htpasswd.users";
+    root "/var/cache/munin/www";
+  }
+
+  location ^~ /munin-cgi/munin-cgi-graph/ {
+  #   if ($uri ~ /munin-cgi/munin-cgi-graph/([^/]*)) { set $path $1; }
+      fastcgi_split_path_info ^(/munin-cgi/munin-cgi-graph)(.*);
+      fastcgi_param PATH_INFO $fastcgi_path_info;
+      fastcgi_pass unix:/var/run/munin/fastcgi-munin-graph.sock;
+      include fastcgi_params;
+  }
+  location  ^~ /munin-cgi/munin-cgi-html/ {
+  #   if ($uri ~ /munin-cgi/munin-cgi-html/([^/]*)) { set $path $1; }
+      fastcgi_split_path_info ^(/munin-cgi/munin-cgi-html)(.*);
+      fastcgi_param PATH_INFO $fastcgi_path_info;
+      fastcgi_pass unix:/var/run/munin/fastcgi-munin-html.sock;
+      include fastcgi_params;
+  }
+}
